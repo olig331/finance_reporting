@@ -23,27 +23,30 @@ type BankStatement struct {
 }
 
 func main() {
-	in, err := os.Open("statement-july.csv")
+	file, err := os.Open("statement-sept.csv")
 	if err != nil {
 		panic(err)
 	}
-	defer in.Close()
+	defer file.Close()
 
-	bankStatement := []*BankStatement{}
+	bank_statement := []*BankStatement{}
 
-	if err := gocsv.UnmarshalFile(in, &bankStatement); err != nil {
+	if err := gocsv.UnmarshalFile(file, &bank_statement); err != nil {
 		panic(err)
 	}
 
-	var total float64 = 0.0
-	myRegex, err := regexp.Compile(`(ONE\sSTOP)|(MCDONALDS)|(TESCO)|(ASDA)|(CO\-OP)|(SAINSBURYS)|(UBER\s\*EATS)|(GREGGS)|(Olive\sTree)|(THE\sBAY\sVIEW\sINN)|(MORRISONS)|(ALLSTARSSP\*)|(TAUNTON\sDEANE\sCRICKET)`)
+	var total float64
+	my_regex, err := regexp.Compile(`(ONE\sSTOP)|(MCDONALDS)|(TESCO)|(ASDA)|(CO\-OP)|(SAINSBURYS)|(UBER\s\*EATS)|(GREGGS)|(Olive\sTree)|(THE\sBAY\sVIEW\sINN)|(MORRISONS)|(ALLSTARSSP\*)|(TAUNTON\sDEANE\sCRICKET)`)
+	if err != nil {
+		panic(err)
+	}
 
-	for _, line := range bankStatement {
-		found := myRegex.MatchString(line.Description)
+	for _, line := range bank_statement {
+		matched := my_regex.MatchString(line.Description)
 		if err != nil {
 			panic(err)
 		}
-		if found {
+		if matched {
 			total += line.PaidOut
 			line.Catagory = "food"
 		} else {
@@ -51,14 +54,14 @@ func main() {
 		}
 	}
 
-	file, err := json.MarshalIndent(bankStatement, "", "  ")
+	json_file, err := json.MarshalIndent(bank_statement, "", "  ")
 	if err != nil {
 		panic(err)
 	}
 
-	_ = ioutil.WriteFile("statment_as_json.json", file, 0600)
+	_ = ioutil.WriteFile("statment_as_json.json", json_file, 0600)
 
-	log(bankStatement)
+	log(bank_statement)
 	m := make(map[string]float64)
 	m["food-total"] = math.Round(total*100) / 100
 	log(m)
